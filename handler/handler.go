@@ -51,6 +51,7 @@ func (s *WebSocketServer) wsConnect(w http.ResponseWriter, r *http.Request) (*we
 }
 
 func (s *WebSocketServer) RealTime(w http.ResponseWriter, r *http.Request) {
+	log.Printf("new connection from %s", r.RemoteAddr)
 
 	var err error
 	conn, err := s.wsConnect(w, r)
@@ -59,6 +60,7 @@ func (s *WebSocketServer) RealTime(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "websocket upgrade required", http.StatusBadRequest)
 		return
 	}
+	log.Printf("websocket connected from %s", r.RemoteAddr)
 
 	defer func() {
 		_ = conn.Close()

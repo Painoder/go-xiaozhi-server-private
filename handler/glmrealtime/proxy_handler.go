@@ -2,7 +2,9 @@ package glmrealtime
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,18 +22,20 @@ func (w *XiaozhiHandler) InitProxy(ctx context.Context) error {
 	headers := http.Header{}
 	headers.Add("Authorization", "Bearer "+config.GLMRealtimeConfig().APIKey)
 	wsUrl := config.GLMRealtimeConfig().BaseURL
+	log.Printf("connecting to glm-realtime api: %s", wsUrl)
 	conn, _, err := websocket.DefaultDialer.Dial(wsUrl, headers)
 	if err != nil {
-		fmt.Errorf("connect to glm-realtime api failed, err: %v", err)
+		log.Printf("connect to glm-realtime api failed: %v", err)
 		return err
 	}
+	log.Printf("connected to glm-realtime api successfully")
 
 	w.apiConn = conn
 	go func() {
 		for {
 			msgType, message, err := conn.ReadMessage()
 			if err != nil {
-				fmt.Errorf("read message from glm-realtime api failed, err: %v", err)
+				log.Printf("read from glm-realtime api failed: %v", err)
 				return
 			}
 			_ = w.handleRealtimeApiEvent(msgType, message)
@@ -43,9 +47,10 @@ func (w *XiaozhiHandler) InitProxy(ctx context.Context) error {
 
 func (w *XiaozhiHandler) SendToRealtimeAPI(event any) error {
 	if event == nil {
-		fmt.Errorf("send to glm-realtime api event is nil")
 		return nil
 	}
+	data, _ := json.Marshal(event)
+	log.Printf("send to glm-realtime: %s", string(data))
 	return w.apiConn.WriteJSON(event)
 }
 
@@ -58,9 +63,10 @@ func (w *XiaozhiHandler) logServerEvent(event openai.ServerEvent) {
 }
 
 func (w *XiaozhiHandler) handleRealtimeApiEvent(messageType int, p []byte) error {
+	log.Printf("recv from glm-realtime: %s", string(p))
 	event, err := openai.UnmarshalServerEvent(p)
 	if err != nil {
-		fmt.Errorf("unmarshal server event failed, err: %v", err)
+		log.Printf("unmarshal server event failed: %v", err)
 		return err
 	}
 	w.logServerEvent(event)
