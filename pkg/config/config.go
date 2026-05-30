@@ -132,11 +132,15 @@ func ReloadConfig() error {
 }
 
 func (c *BizConf) LoadEnv(v *viper.Viper) {
-	c.OpenAI.APIKey = strings.TrimSpace(v.GetString("XDIM_STEP_API_KEY"))
+	if envKey := strings.TrimSpace(v.GetString("XDIM_STEP_API_KEY")); envKey != "" {
+		c.OpenAI.APIKey = envKey
+	}
 	if c.Provider.Name == "openai" && c.OpenAI.APIKey == "" {
 		panic("api_key is required for openai provider")
 	}
-	c.GLMRealtime.APIKey = strings.TrimSpace(v.GetString("XDIM_GLM_API_KEY"))
+	if envKey := strings.TrimSpace(v.GetString("XDIM_GLM_API_KEY")); envKey != "" {
+		c.GLMRealtime.APIKey = envKey
+	}
 	if c.Provider.Name == "glm-realtime" && c.GLMRealtime.APIKey == "" {
 		panic("api_key is required for glm-realtime provider")
 	}
